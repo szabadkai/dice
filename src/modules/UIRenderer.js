@@ -66,6 +66,7 @@ export function renderPool(pool, onAdjust, onRemove) {
       ? `D${entry.sides}`
       : entry.type === 'UW_ATK' ? '⚔ UW Atk'
       : entry.type === 'UW_DEF' ? '🛡 UW Def'
+      : entry.type === 'UW_MAG' ? '✦ UW Mag'
       : entry.type;
 
     const controls = el('div', ['pool-row-controls']);
@@ -125,7 +126,7 @@ export function renderResults(results, threshold, onToggleLock, onToggleSelect) 
   const diceEls = [];
 
   results.forEach((r, i) => {
-    const isUW     = r.type === 'UW_ATK' || r.type === 'UW_DEF';
+    const isUW     = r.type === 'UW_ATK' || r.type === 'UW_DEF' || r.type === 'UW_MAG';
     const isMax    = !isUW && r.numeric === r.sides;
     const isMin    = !isUW && r.numeric === 1;
     const isSuccess = threshold > 0 && r.numeric >= threshold;

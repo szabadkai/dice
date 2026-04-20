@@ -1,0 +1,26 @@
+{
+  "name": "Warhammer Dice Simulator",
+  "short_name": "Dice",
+  "description": "Warhammer 40K and tabletop dice simulator with Underworlds support",
+  "start_url": "/dice/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#e2b714",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%231a1a2e' rx='32'/%3E%3Ctext y='140' x='96' text-anchor='middle' font-size='120' font-family='serif'%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%231a1a2e' rx='80'/%3E%3Ctext y='380' x='256' text-anchor='middle' font-size='320' font-family='serif'%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "utilities"],
+  "lang": "en"
+}

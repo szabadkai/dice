@@ -32,6 +32,20 @@ const UW_DEF_FACES = [
 ];
 
 /**
+ * Warhammer Underworlds Magic die faces (6-sided).
+ * 2× Channel, 2× Focus, 1× Crit, 1× Blank.
+ * @type {string[]}
+ */
+const UW_MAG_FACES = [
+  'Channel',   // ⚡ — channel
+  'Channel',   // ⚡ — channel
+  'Focus',     // 👁 — focus
+  'Focus',     // 👁 — focus
+  'Crit',      // ✴ — critical success
+  'Blank',
+];
+
+/**
  * Returns a cryptographically random integer in the range [1, sides].
  * @param {number} sides - Number of die faces (must be ≥ 2).
  * @returns {number} Random integer between 1 and sides (inclusive).
@@ -72,6 +86,15 @@ export function rollUWDefence() {
 }
 
 /**
+ * Rolls a single Warhammer Underworlds Magic die.
+ * @returns {{ numeric: number, face: string }}
+ */
+export function rollUWMagic() {
+  const n = rollDie(6);
+  return { numeric: n, face: UW_MAG_FACES[n - 1] };
+}
+
+/**
  * Rolls an entire pool of dice entries.
  *
  * @param {Array<{type: string, count: number, sides?: number}>} pool
@@ -95,6 +118,9 @@ export function rollPool(pool) {
       } else if (entry.type === 'UW_DEF') {
         const r = rollUWDefence();
         results.push({ type: 'UW_DEF', sides: 6, numeric: r.numeric, face: r.face });
+      } else if (entry.type === 'UW_MAG') {
+        const r = rollUWMagic();
+        results.push({ type: 'UW_MAG', sides: 6, numeric: r.numeric, face: r.face });
       } else {
         const sides = getSides(entry);
         const numeric = rollDie(sides);
@@ -123,7 +149,7 @@ function getSides(entry) {
  * @returns {number}
  */
 export function sidesForType(type) {
-  if (type === 'UW_ATK' || type === 'UW_DEF') return 6;
+  if (type === 'UW_ATK' || type === 'UW_DEF' || type === 'UW_MAG') return 6;
   const map = { D3: 3, D4: 4, D6: 6, D8: 8, D10: 10, D12: 12, D20: 20, D100: 100 };
   return map[type] ?? 6;
 }

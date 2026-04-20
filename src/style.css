@@ -258,8 +258,9 @@
   .die-chip:active { transform: scale(0.94); animation: none; }
 
   .die-chip--custom  { border-color: #a78bfa; color: #a78bfa; }
-  .die-chip--uw-atk  { border-color: var(--accent); background: linear-gradient(135deg, #1a1a2e, #2a1a0e); }
-  .die-chip--uw-def  { border-color: var(--success); color: var(--success); }
+  .die-chip--uw-atk  { border-color: #c94040; color: #ff8888; background: linear-gradient(135deg, #1a1a2e, #2e1010); }
+  .die-chip--uw-def  { border-color: #7090b0; color: #a0c4e0; }
+  .die-chip--uw-mag  { border-color: #9070c0; color: #c4a0f0; background: linear-gradient(135deg, #1a1a2e, #1e1030); }
 
   /* Ripple on die chip tap */
   .die-chip::after {

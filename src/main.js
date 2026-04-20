@@ -6,6 +6,9 @@
 'use strict';
 
 import './style.css';
+import '@fontsource/cinzel/400.css';
+import '@fontsource/cinzel/600.css';
+import '@fontsource/cinzel/700.css';
 import { rollPool }                              from './modules/DiceEngine.js';
 import { renderPool, renderResults, renderStats,
          renderHistory, renderPresets,
@@ -18,6 +21,7 @@ import * as History                              from './modules/HistoryManager.
 import * as Presets                              from './modules/PresetsManager.js';
 import { woundThreshold, effectiveSave }         from './modules/WH40KHelper.js';
 import * as Particles                            from './modules/ParticleSystem.js';
+import * as Dice3D                               from './modules/Dice3DRenderer.js';
 
 /* ═══════════════════════════════════════════════════════════════
    App State (quasi-Redux)
@@ -47,6 +51,7 @@ const appState = {
   historyOpen: false,
   statsOpen:   false,
   presetsOpen: false,
+  use3D:       false,
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -56,14 +61,20 @@ function render() {
   // Pool
   renderPool(appState.pool, handleAdjustPool, handleRemoveFromPool);
 
-  // Results
+  // Results (SVG fallback — always rendered for accessibility; hidden
+  // visually when 3D active).
   const diceEls = renderResults(
     appState.results,
     appState.threshold,
     handleToggleLock,
     handleToggleSelect
   );
-  window._lastDiceEls = diceEls; // used by animations
+  window._lastDiceEls = diceEls; // used by fallback animations
+
+  // 3D tray highlights (for selected/locked state after renders).
+  if (appState.use3D) {
+    Dice3D.refreshHighlights(appState.results, appState.threshold);
+  }
 
   // Stats
   renderStats({
@@ -194,27 +205,41 @@ async function handleRoll() {
   if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
 
   const diceEls = window._lastDiceEls ?? [];
-  await animateRoll(diceEls);
+
+  if (appState.use3D) {
+    await Dice3D.rollAll(appState.results, appState.threshold, {
+      onToggleSelect: handleToggleSelect,
+      onToggleLock:   handleToggleLock,
+    });
+  } else {
+    await animateRoll(diceEls);
+  }
 
   // Per-die celebrations
-  diceEls.forEach((el, i) => {
-    const r = appState.results[i];
+  appState.results.forEach((r, i) => {
     if (!r) return;
-    if (r.numeric === r.sides && r.sides) {
-      celebrateCritical(el);
-      // Burst particles from die centre
-      const rect   = el.getBoundingClientRect();
+    const isCrit = r.numeric === r.sides && r.sides;
+    if (isCrit && !appState.use3D) celebrateCritical(diceEls[i]);
+    if (!isCrit && r.numeric === 1 && r.sides > 1 && !appState.use3D) celebrateFail(diceEls[i]);
+
+    // Particle burst on crit — works for both modes.
+    if (isCrit) {
       const canvas = document.getElementById('particle-canvas');
-      if (canvas) {
-        const cr = canvas.getBoundingClientRect();
-        Particles.burst(
-          rect.left - cr.left + rect.width / 2,
-          rect.top  - cr.top  + rect.height / 2,
-          { count: 18, color: '#e2b714', speed: 5 }
-        );
+      if (!canvas) return;
+      const cr = canvas.getBoundingClientRect();
+      let cx, cy;
+      if (appState.use3D) {
+        const pt = Dice3D.worldToTrayPx(i);
+        if (!pt) return;
+        cx = pt.x; cy = pt.y;
+      } else if (diceEls[i]) {
+        const rect = diceEls[i].getBoundingClientRect();
+        cx = rect.left - cr.left + rect.width / 2;
+        cy = rect.top  - cr.top  + rect.height / 2;
+      } else {
+        return;
       }
-    } else if (r.numeric === 1) {
-      celebrateFail(el);
+      Particles.burst(cx, cy, { count: 22, color: '#e2b714', speed: 5 });
     }
   });
 
@@ -223,10 +248,11 @@ async function handleRoll() {
     const all = appState.results.filter(r => r.sides);
     const succ = all.filter(r => r.numeric >= appState.threshold).length;
     if (succ === all.length && all.length > 0) {
-      celebrateAllSuccess(diceEls);
+      if (!appState.use3D) celebrateAllSuccess(diceEls);
       Audio.playSuccess();
     } else if (succ === 0 && all.length > 0) {
-      celebrateAllFail(diceEls);
+      if (!appState.use3D) celebrateAllFail(diceEls);
+      else Dice3D.shakeCamera(500);
       Audio.playFail();
     }
   }
@@ -580,6 +606,21 @@ function init() {
   // Initialise particle system
   const canvas = document.getElementById('particle-canvas');
   if (canvas) Particles.init(canvas);
+
+  // Initialise 3D dice renderer (if supported)
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas3d = document.getElementById('dice-3d-canvas');
+  const tray     = document.getElementById('dice-tray');
+  if (canvas3d && tray && !reduced && Dice3D.isWebGLAvailable()) {
+    try {
+      Dice3D.init(canvas3d, tray);
+      appState.use3D = true;
+      document.body.classList.add('dice-3d');
+    } catch (err) {
+      console.warn('3D dice renderer failed to init; falling back to SVG.', err);
+      appState.use3D = false;
+    }
+  }
 
   // Wire up all events
   wireEvents();
